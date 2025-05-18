@@ -1,5 +1,8 @@
-import { USERMODEL } from "../models/user.model";
-import httpStatus from "http-status"
+import { USERMODEL } from "../models/user.model.js";
+import httpStatus from "http-status";
+import bcrypt,{hash} from "bcrypt";
+import crypto from "crypto";
+
 
 //signup
 export const register = async(req, res) => {
@@ -9,7 +12,7 @@ export const register = async(req, res) => {
         const userExist = await USERMODEL.findOne({username});
 
         if(userExist){
-           return res.status(httpStatus.FOUND).json({success:false, message:"user already register"})
+           return res.status(httpStatus.FOUND).json({success:false, message:"username already register"})
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -44,17 +47,21 @@ export const login = async(req, res) => {
         };
 
         const user = await USERMODEL.findOne({username});
+        
         if(!user){
-           return res.status(httpStatus.NOT_FOUND).json({success:false, message:"User not found."});
+           return res.status(httpStatus.NOT_FOUND).json({success:false, message:"Username is wrong or not found."});
         };
 
-        if(bcrypt.compare(password, user.password)){
-            let token = crypto.randomBytes(20).toString("hex");
+          const isMatch = await bcrypt.compare(password, user.password);
 
+        if(!isMatch){
+            return res.status(httpStatus.NOT_FOUND).json({success:false, message:"Password is wrong."}) 
+        }
+
+          let token = crypto.randomBytes(20).toString("hex");
             user.token = token;
             await user.save();
             return res.status(httpStatus.OK).json({success:true, token:token})
-        }
 
     } catch (error) {
      return res.status(500).json({success:false, message:`SOMETHING WENT WRONG ${error}`})
