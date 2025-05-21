@@ -12,7 +12,7 @@ const app = express();
 // const port = 8080;
 
 const server = createServer(app);
-const socketIo = connectToSocket(server);
+const io = connectToSocket(server);
 
 const url = process.env.MONGO_URI;
 
