@@ -4,8 +4,8 @@ import React from 'react'
 const Navbar = () => {
   return (
     <nav className='navbar'>
-        <div>
-            <h3>Meetus</h3>
+        <div className='meetus-logo'>
+            <img src="/meetus-logo.png" alt="logo" />
         </div>
 
         <div className='register'>
