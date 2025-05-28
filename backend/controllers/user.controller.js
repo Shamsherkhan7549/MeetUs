@@ -1,27 +1,27 @@
 import { USERMODEL } from "../models/user.model.js";
 import httpStatus from "http-status";
-import bcrypt,{hash} from "bcrypt";
+import bcrypt from 'bcrypt'
 import crypto from "crypto";
 
 
 //signup
 export const register = async(req, res) => {
-    const {name,username,password}  = req.body;
+    const {username,email,password}  = req.body;
 
     try {
-        const userExist = await USERMODEL.findOne({username});
+        const userExist = await USERMODEL.findOne({$or:[{username:username}, {email:email}]});
 
         if(userExist){
-           return res.status(httpStatus.FOUND).json({success:false, message:"username already register"})
+           return res.status(httpStatus.FOUND).json({success:false, message:"username or email already register"})
         }
 
         const salt = await bcrypt.genSalt(10);
-
+        
        const hashedPassword = await bcrypt.hash(password, salt);
 
        const newUser = new USERMODEL({
-        name:name,
         username:username,
+        email:email,
         password:hashedPassword
        });
 
@@ -31,7 +31,6 @@ export const register = async(req, res) => {
 
        
     } catch (error) {
-       
         return res.json({success:false, message:`SOMETHING WENT WRONG ${error}`})
         
     }
@@ -43,7 +42,7 @@ export const login = async(req, res) => {
 
     try {
         if(!username || !password){
-            res.status(4000).json({success:false, message:"Please Provide Both Info."});
+            res.status(400).json({success:false, message:"Please Provide username and  password."});
         };
 
         const user = await USERMODEL.findOne({username});
@@ -55,13 +54,13 @@ export const login = async(req, res) => {
           const isMatch = await bcrypt.compare(password, user.password);
 
         if(!isMatch){
-            return res.status(httpStatus.NOT_FOUND).json({success:false, message:"Password is wrong."}) 
+            return res.status(httpStatus.UNAUTHORIZED).json({success:false, message:"Password is wrong."}) 
         }
 
           let token = crypto.randomBytes(20).toString("hex");
             user.token = token;
             await user.save();
-            return res.status(httpStatus.OK).json({success:true, token:token})
+            return res.status(httpStatus.OK).json({success:true, token:token, message:"Welcome Back"})
 
     } catch (error) {
      return res.status(500).json({success:false, message:`SOMETHING WENT WRONG ${error}`})

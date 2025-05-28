@@ -127,6 +127,11 @@ button > .auth-path{
   margin: 5rem auto;
 }
 
+.error{
+  color: red;
+  font-weight: 600;
+}
+
 @media (max-width:640px) {
   .join-guest{
     background-color: gray;

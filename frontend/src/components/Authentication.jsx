@@ -11,6 +11,8 @@ import Link from '@mui/material/Link';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
+import { AuthContext } from '../context/AuthContext';
+import { Snackbar } from '@mui/material';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -38,8 +40,15 @@ export default function Authentication() {
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [open, setOpen] = React.useState(false);
+  const [message, setMessage] = React.useState("")
+  const [error, setError] = React.useState("")
 
-  const[formData, setFormData] = React.useState({});
+  const[formData, setFormData] = React.useState({
+    username:"",
+    email:"",
+    password:""
+  });
+
   const [registerState, setRegisterState]  = React.useState("signin")
 
 
@@ -51,27 +60,6 @@ export default function Authentication() {
     setOpen(false);
   };
 
-  const handlingchange = (e) => {
-        setFormData((prev) => {
-            return {...prev, [e.target.name]: e.target.value}
-        })
-  }
-
-  const handleSubmit = (event) => {
-      event.preventDefault();
-    if(registerState === "signup"){
-        if (usernameError || emailError || passwordError) {
-            return;
-        }
-
-        console.log(formData)
-    }else{
-         if (usernameError || passwordError) {
-            return;
-        }
-        console.log(formData)
-    }
-  };
 
   const handlingButton = () => {
     if(registerState==='signin'){
@@ -88,13 +76,16 @@ export default function Authentication() {
 
     let isValid = true;
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true);
-      setEmailErrorMessage('Please enter a valid email address.');
-      isValid = false;
-    } else {
-      setEmailError(false);
-      setEmailErrorMessage('');
+    if(registerState==="signup"){
+      if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
+        setEmailError(true);
+        setEmailErrorMessage('Please enter a valid email address.');
+        isValid = false;
+
+      } else {
+        setEmailError(false);
+        setEmailErrorMessage('');
+      }
     }
 
      if (!username.value) {
@@ -110,12 +101,59 @@ export default function Authentication() {
       setPasswordError(true);
       setPasswordErrorMessage('Password must be at least 6 characters long.');
       isValid = false;
+      
     } else {
       setPasswordError(false);
       setPasswordErrorMessage('');
     }
 
     return isValid;
+  };
+
+  const handlingchange = (e) => {
+   setFormData((prev) => {
+      return {...prev, [e.target.name]: e.target.value}
+    });
+  };
+
+  const {handleRegister, handleLogin} = React.useContext(AuthContext)
+
+  const handleSubmit = async(event) => {
+      event.preventDefault();
+
+  try {
+      
+    if(registerState === "signup"){
+        if (usernameError || emailError || passwordError) {
+            return;
+        }
+
+        const result = await handleRegister(formData.username,formData.email, formData.password);
+        setMessage(result);
+        setOpen(true);
+        
+        setFormData(prev => {
+          return {...prev, username:"", email:"", password:""}
+        });
+    }else{
+         if (usernameError || passwordError) {
+            return;
+        }
+       const result = await handleLogin(formData.username, formData.password)
+        setMessage(result)
+        setOpen(true);
+        setFormData(prev => {
+          return {...prev, username:"", password:""}
+        });
+
+    }
+  } catch (e) {
+        let message = e.response.data.message; 
+        console.log(message)
+        setError(message);
+        setMessage(message)   
+        setOpen(true)
+     }
   };
 
   return (
@@ -141,6 +179,7 @@ export default function Authentication() {
             id="username"
             type="username"
             name="username"
+            value={formData.username}
             placeholder="your username"
             autoFocus
             required
@@ -159,6 +198,7 @@ export default function Authentication() {
             id="email"
             type="email"
             name="email"
+            value={formData.email}
             placeholder="your@email.com"
             autoComplete="email"
             autoFocus
@@ -181,6 +221,7 @@ export default function Authentication() {
             placeholder="••••••"
             type="password"
             id="password"
+            value={formData.password}
             autoComplete="current-password"
             autoFocus
             required
@@ -190,6 +231,8 @@ export default function Authentication() {
             onChange={handlingchange}
           />
         </FormControl>
+
+          {error && <p className='error'>{error}</p>}
         
      
         <Button type="submit" fullWidth variant="contained" onClick={validateInputs}>
@@ -203,7 +246,13 @@ export default function Authentication() {
             {registerState==='signin'?"Sign Up":"Sign In"}
           </button>
         </Typography>
-      </Box>      
+      </Box>   
+                  <Snackbar
+                    open={open}
+                    autoHideDuration={4000}
+                    onClose={handleClose}
+                    message={message}
+                  />   
     </Card>
   );
 }
