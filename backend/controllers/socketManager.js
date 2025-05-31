@@ -14,7 +14,9 @@ export const connectToSocket = (server) => {
         }
     });
 
+
     io.on("connection", (socket)=>{
+            console.log("something connnected");
         socket.on("join-call", async(path) => {
             if(connections[path] === undefined){
                 connections[path] = [];
@@ -32,7 +34,7 @@ export const connectToSocket = (server) => {
                 io.to(connections[path][a]).emit("user-joined", socket.id);
             };
 
-            if(messages[path] === undefined){
+            if(messages[path] !== undefined){
                 for(let a = 0; a < messages[path].length; ++a){
                     io.to(socket.id).emit("chat-message", messages[path][a]['data'],messages[path][a]['sender'], messages[path][a]['socket-id-sender'])
 
@@ -45,10 +47,10 @@ export const connectToSocket = (server) => {
         });
 
         socket.on("chat-message", (data, sender) => {
-            consg[matchingRoom, found] = Object.entries(connections)
+            const[matchingRoom, found] = Object.entries(connections)
             .reduce(([room, isFound], [roomKey, roomValue])=>{
                 if(!isFound && roomValue.includes(socket.id)){
-                    retun [roomKey, true]
+                    return [roomKey, true]
                 }
                 return [room, isFound]
             }, ['', false]);
@@ -58,7 +60,7 @@ export const connectToSocket = (server) => {
                     messages[matchingRoom] = []
                 }
                 messages[matchingRoom].push({'sender': sender, 'data': data, 'socket-id-sender': socket.id})
-                console.log("message" , KeyboardEvent, ": ", sender, data );
+                console.log("message: ", sender, data );
                 connections[matchingRoom].forEach(element => {
                     io.to(element).emit("chat-message", data, sender, socket.id)
                 });
