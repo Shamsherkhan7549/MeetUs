@@ -9,7 +9,6 @@ import cors from 'cors';
 import userRouter from './routes/user.router.js';
 
 const app = express();
-// const port = 8080;
 
 const server = createServer(app);
 const io = connectToSocket(server);
